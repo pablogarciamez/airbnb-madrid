@@ -19,10 +19,17 @@ steps.append(("rm missing price", len(df)))
 
 assert df["id"].duplicated().sum() == 0
 
+steps.append(("check duplicate ids", len(df)))
+
 # I have excluded all listings priced over €2,000 per night, as they lack credibility and account for just 52 listings, an insignificant fraction of the total dataset. Furthermore, these entries are highly unrealistic, featuring exact duplicates at €15,000 and even a single-occupancy apartment in Sol priced at over €22,000 per night.
 
 df = df[df["price"] <= 2000]
 steps.append(("rm price over 2000", len(df)))
+
+assert df["host_is_superhost"].isin(["t", "f"]).all()
+
+df["host_is_superhost"] = df["host_is_superhost"] == "t"
+steps.append(("host_is_superhost to bool", len(df)))
 
 print(steps)
 
