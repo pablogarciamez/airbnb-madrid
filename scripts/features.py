@@ -14,14 +14,61 @@ def add_bath_num_and_bath_shared(df):
     return df
 
 def add_has_reviews(df):
-    df["has_reviews"] = df["review_scores_rating"].isna()
+    df["has_reviews"] = df["review_scores_rating"].notna()
     return df
+
+def add_room_type_one_hot(df):
+    df["is_private"] = (df["room_type"] == "Private room").astype(int)
+    df["is_shared"] = (df["room_type"] == "Shared room").astype(int)
+    df["is_hotel"] = (df["room_type"] == "Hotel room").astype(int)
+    return df
+
+def add_neighbourhood_grouped(df, frequent_neighbourhoods):
+    df["neighbourhood_grouped"] = df["neighbourhood_cleansed"].where(df["neighbourhood_cleansed"].isin(frequent_neighbourhoods), "Other")
+    return df
+
+def add_nb_one_hot(df, reference, neighbourhoods):
+    start_columns = len(df.columns)
+    nb_columns = []
+    for neighbourhood in neighbourhoods:
+        df[f"nb_{neighbourhood}"] = (df["neighbourhood_grouped"] == neighbourhood).astype(int)
+        nb_columns.append(f"nb_{neighbourhood}")
+    assert len(df.columns) == start_columns + 97
+    assert df[nb_columns].sum(axis=1).isin([0, 1]).all()
+    assert (df[nb_columns].sum(axis=1) == 0).sum() == (df["neighbourhood_grouped"] == reference).sum()
+    return df
+
+
+counts = train["neighbourhood_cleansed"].value_counts()
+frequent_neighbourhoods = counts[counts >= 20].index
+
+train = add_neighbourhood_grouped(train, frequent_neighbourhoods)
+val = add_neighbourhood_grouped(val, frequent_neighbourhoods)
+test = add_neighbourhood_grouped(test, frequent_neighbourhoods)
+
+reference = train["neighbourhood_grouped"].value_counts().index[0]
+neighbourhoods = []
+for neighbourhood in train["neighbourhood_grouped"].value_counts().index:
+    if (neighbourhood != reference):
+        neighbourhoods.append(neighbourhood)
+
+train = add_nb_one_hot(train, reference, neighbourhoods)
+val = add_nb_one_hot(val, reference, neighbourhoods)
+test = add_nb_one_hot(test, reference, neighbourhoods)
+
+train = add_room_type_one_hot(train)
+val = add_room_type_one_hot(val)
+test = add_room_type_one_hot(test)
+
+assert (train[["is_private", "is_shared", "is_hotel"]].sum(axis=1).isin((0, 1))).all()
+assert (val[["is_private", "is_shared", "is_hotel"]].sum(axis=1).isin((0, 1))).all()
+assert (test[["is_private", "is_shared", "is_hotel"]].sum(axis=1).isin((0, 1))).all()
 
 train = add_bath_num_and_bath_shared(train)
 val = add_bath_num_and_bath_shared(val)
 test = add_bath_num_and_bath_shared(test)
 
-no_reviews = train["review_scores_rating"].notna().sum()
+no_reviews = train["review_scores_rating"].isna().sum()
 
 train = add_has_reviews(train)
 val = add_has_reviews(val)
