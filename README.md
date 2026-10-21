@@ -6,6 +6,18 @@ Data analysis of Madrid Airbnb listings for nightly price prediction using prope
 
 All data for this project is from [Get the Data](https://insideairbnb.com/es/get-the-data/), a free public resource providing downloadable datasets, metrics, and quarterly archives about Airbnb listings in major cities across the world. Specifically, this project utilizes the Madrid Airbnb listings dataset [listings.csv.gz](https://data.insideairbnb.com/spain/comunidad-de-madrid/madrid/2026-06-20/data/listings.csv.gz) from June 20, 2026. To replicate this study, first create a `data/` folder at the root of the repository and move the decompressed file `listings.csv` there.
 
+## Setup
+
+Create a virtual environment at the root of the repository and install the dependencies:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+requirements.txt pins the CPU-only build of PyTorch (torch==2.14.1+cpu). This build is not on PyPI, so the first line of the file (--extra-index-url https://download.pytorch.org/whl/cpu) tells pip to also look in PyTorch's own package index. The CPU build is much smaller than the default one, which bundles NVIDIA GPU (CUDA) libraries.
+
 ## Repository structure
 
 - `data/`: contains the Madrid Airbnb listings dataset [listings.csv.gz](https://data.insideairbnb.com/spain/comunidad-de-madrid/madrid/2026-06-20/data/listings.csv.gz) from June 20, 2026, as well as its cleaned version `listings_clean.csv`. This folder is not included in the repository (it is excluded via .gitignore) and must be created as described in Data.
